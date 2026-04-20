@@ -170,15 +170,23 @@ export function WhatIfChatbotPage() {
       setMessages((current) => [...current, { role: 'assistant', content: answer }])
     } catch (caughtError) {
       const fallback = buildLocalFallback(question, currentBill, solarOutcome.monthlySavings)
+      const message = caughtError instanceof Error ? caughtError.message : 'Gemini API was unavailable.'
+      const missingKey = /missing\s+vite_gemini_api_key/i.test(message)
+      const fallbackSuffix = missingKey
+        ? ' (Add VITE_GEMINI_API_KEY for full Gemini responses.)'
+        : ' (Using a local fallback response.)'
+
       setMessages((current) => [
         ...current,
         {
           role: 'assistant',
-          content: `${fallback} (Add VITE_GEMINI_API_KEY for full Gemini responses.)`,
+          content: `${fallback}${fallbackSuffix}`,
         },
       ])
-      const message = caughtError instanceof Error ? caughtError.message : 'Gemini API was unavailable.'
-      if (/quota|rate limit/i.test(message)) {
+
+      if (missingKey) {
+        setError('Gemini API key is missing. Added a local fallback answer instead.')
+      } else if (/quota|rate limit/i.test(message)) {
         setError('Gemini quota/rate limit reached. A local fallback answer was used.')
       } else {
         setError('Gemini API was unavailable, so a local fallback answer was used.')
