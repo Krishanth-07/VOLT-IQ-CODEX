@@ -1,6 +1,23 @@
 import { TARIFF_PROFILES } from '../data/demo'
 import type { ApplianceBreakdown, SimulationScenario, TariffProfile, TariffSlab, TariffStatus } from '../types'
 
+const TN_UPTO_500_SLABS: TariffSlab[] = [
+  { index: 0, bandLabel: '0-100', rate: 0, minUnits: 0, maxUnits: 100 },
+  { index: 1, bandLabel: '101-200', rate: 2.25, minUnits: 100, maxUnits: 200 },
+  { index: 2, bandLabel: '201-400', rate: 4.5, minUnits: 200, maxUnits: 400 },
+  { index: 3, bandLabel: '401-500', rate: 6, minUnits: 400, maxUnits: 500 },
+]
+
+const TN_ABOVE_500_SLABS: TariffSlab[] = [
+  { index: 0, bandLabel: '0-100', rate: 0, minUnits: 0, maxUnits: 100 },
+  { index: 1, bandLabel: '101-400', rate: 4.5, minUnits: 100, maxUnits: 400 },
+  { index: 2, bandLabel: '401-500', rate: 6, minUnits: 400, maxUnits: 500 },
+  { index: 3, bandLabel: '501-600', rate: 8, minUnits: 500, maxUnits: 600 },
+  { index: 4, bandLabel: '601-800', rate: 9, minUnits: 600, maxUnits: 800 },
+  { index: 5, bandLabel: '801-1000', rate: 10, minUnits: 800, maxUnits: 1000 },
+  { index: 6, bandLabel: '1001+', rate: 11, minUnits: 1000, maxUnits: null },
+]
+
 export function getTariffProfile(state: string) {
   return TARIFF_PROFILES.find((profile) => profile.state === state) ?? TARIFF_PROFILES[0]
 }
@@ -13,12 +30,18 @@ export function formatSlabLabel(slab: TariffSlab) {
   return `${formatSlabRate(slab.rate)} slab`
 }
 
+export function getEffectiveTariffSlabs(units: number, profile: TariffProfile): TariffSlab[] {
+  if (profile.id !== 'tn') return profile.slabs
+  return units > 500 ? TN_ABOVE_500_SLABS : TN_UPTO_500_SLABS
+}
+
 export function calculateBillFromUnits(units: number, profile: TariffProfile) {
   if (units <= 0) return 0
 
   let bill = 0
+  const slabs = getEffectiveTariffSlabs(units, profile)
 
-  for (const slab of profile.slabs) {
+  for (const slab of slabs) {
     const upper = slab.maxUnits ?? units
     const unitsInSlab = Math.max(Math.min(units, upper) - slab.minUnits, 0)
     bill += unitsInSlab * slab.rate
@@ -45,13 +68,14 @@ export function estimateUnitsFromBill(monthlyBill: number, profile: TariffProfil
 }
 
 export function getTariffStatus(units: number, profile: TariffProfile): TariffStatus {
+  const slabs = getEffectiveTariffSlabs(units, profile)
   const slab =
-    profile.slabs.find((item) => {
+    slabs.find((item) => {
       const upper = item.maxUnits ?? Number.POSITIVE_INFINITY
       return units > item.minUnits && units <= upper
     }) ??
-    profile.slabs.find((item) => units <= (item.maxUnits ?? Number.POSITIVE_INFINITY)) ??
-    profile.slabs[profile.slabs.length - 1]
+    slabs.find((item) => units <= (item.maxUnits ?? Number.POSITIVE_INFINITY)) ??
+    slabs[slabs.length - 1]
 
   const unitsIntoSlab = Math.max(units - slab.minUnits, 0)
   const slabWidth =

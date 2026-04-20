@@ -1,11 +1,12 @@
 import { useEnergy } from '../../context/EnergyContext'
 import { formatUnits } from '../../utils/format'
-import { formatSlabLabel } from '../../utils/tariff'
+import { formatSlabLabel, getEffectiveTariffSlabs } from '../../utils/tariff'
 import { SectionCard } from '../common/SectionCard'
 
 export function TariffSlabCard() {
   const { currentScenario, tariffProfile } = useEnergy()
   const status = currentScenario.slabStatus
+  const effectiveSlabs = getEffectiveTariffSlabs(status.units, tariffProfile)
 
   return (
     <SectionCard
@@ -51,7 +52,7 @@ export function TariffSlabCard() {
         </div>
 
         <div className="mt-4 grid gap-2 md:grid-cols-4">
-          {tariffProfile.slabs.map((slab) => (
+          {effectiveSlabs.map((slab) => (
             <div key={slab.index} className="panel-surface rounded-2xl px-3 py-3">
               <p className="text-xs text-[var(--text-muted)]">{slab.bandLabel}</p>
               <p className="mt-1 font-medium text-[var(--text-primary)]">{formatSlabLabel(slab)}</p>

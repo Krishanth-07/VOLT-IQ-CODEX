@@ -239,9 +239,9 @@ export const TARIFF_PROFILES: TariffProfile[] = [
     provider: 'TANGEDCO Domestic',
     slabs: [
       { index: 0, bandLabel: '0-100', rate: 0, minUnits: 0, maxUnits: 100 },
-      { index: 1, bandLabel: '101-200', rate: 1.5, minUnits: 100, maxUnits: 200 },
-      { index: 2, bandLabel: '201-500', rate: 3.5, minUnits: 200, maxUnits: 500 },
-      { index: 3, bandLabel: '501+', rate: 5.75, minUnits: 500, maxUnits: null },
+      { index: 1, bandLabel: '101-200', rate: 2.25, minUnits: 100, maxUnits: 200 },
+      { index: 2, bandLabel: '201-400', rate: 4.5, minUnits: 200, maxUnits: 400 },
+      { index: 3, bandLabel: '401-500', rate: 6, minUnits: 400, maxUnits: 500 },
     ],
   },
   {

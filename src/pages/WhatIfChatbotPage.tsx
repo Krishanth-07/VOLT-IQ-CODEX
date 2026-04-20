@@ -4,6 +4,7 @@ import { useEnergy } from '../context/EnergyContext'
 import { askGeminiWhatIf, type WhatIfMessage } from '../services/gemini'
 import { calculateSolarOutcome } from '../utils/solar'
 import { formatCurrency } from '../utils/format'
+import { getEffectiveTariffSlabs } from '../utils/tariff'
 
 const STARTER_CHIPS = [
   'What if I replace my 2014 AC?',
@@ -114,10 +115,12 @@ export function WhatIfChatbotPage() {
   }, [currentEntries, currentScenario.applianceBreakdown])
 
   const tariffSlabs = useMemo(() => {
-    return tariffProfile.slabs
+    const effectiveSlabs = getEffectiveTariffSlabs(currentUnits, tariffProfile)
+
+    return effectiveSlabs
       .map((slab) => `${slab.bandLabel}: ₹${slab.rate.toFixed(2)}/unit (${slab.minUnits} to ${slab.maxUnits ?? 'above'})`)
       .join('\n')
-  }, [tariffProfile.slabs])
+  }, [currentUnits, tariffProfile])
 
   const systemPrompt = useMemo(
     () =>
