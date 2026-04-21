@@ -9,11 +9,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div>
             <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">VoltIQ</p>
             <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-              Intelligent Energy and Solar Advisor
+              Easy Electricity Savings Planner
             </h1>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Know your bill. Reduce it instantly. Decide if solar is worth it.
+              Understand your bill, cut waste, and decide if solar is worth it.
             </p>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">Start here: Dashboard {'->'} Analyze My Bill {'->'} Apply Suggestions.</p>
           </div>
 
           <nav className="flex flex-wrap items-center gap-3 text-sm">
@@ -27,7 +28,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`
               }
             >
-              Dashboard
+              Home
+            </NavLink>
+            <NavLink
+              to="/advisor"
+              className={({ isActive }) =>
+                `rounded-lg px-4 py-2 transition ${
+                  isActive
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`
+              }
+            >
+              AI Advisor
             </NavLink>
             <NavLink
               to="/solar"
@@ -39,19 +52,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`
               }
             >
-              Solar Advisor
-            </NavLink>
-            <NavLink
-              to="/renewable"
-              className={({ isActive }) =>
-                `rounded-lg px-4 py-2 transition ${
-                  isActive
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'border border-[var(--border-strong)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                }`
-              }
-            >
-              Renewable Optimiser
+              Solar Check
             </NavLink>
             <NavLink
               to="/energy-age"
@@ -63,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`
               }
             >
-              Energy Age
+              Appliance Health
             </NavLink>
             <NavLink
               to="/what-if"
@@ -75,7 +76,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }`
               }
             >
-              What-If Chatbot
+              Ask Assistant
             </NavLink>
           </nav>
         </header>

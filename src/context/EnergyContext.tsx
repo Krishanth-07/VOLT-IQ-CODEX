@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 import { DEFAULT_CITY, DEFAULT_MONTHLY_BILL, DEFAULT_STATE, DEMO_SOLAR_INPUTS, getDefaultApplianceEntries, getCatalogItem, createApplianceEntry } from '../data/demo'
 import { getAiSuggestions } from '../services/openai'
 import type { ApplianceCatalogId, ApplianceEntry, SolarInputs, SuggestionCard } from '../types'
+import { createDefaultEnergyAgeInput, type EnergyAgeInput } from '../utils/energyAge'
 import {
   createCalibrationFactor,
   createScenarioFromEntries,
@@ -27,7 +28,7 @@ type EnergyContextValue = {
   replaceInputEntryCatalog: (entryId: string, catalogId: ApplianceCatalogId) => void
   addAppliance: (catalogId: ApplianceCatalogId) => void
   removeAppliance: (entryId: string) => void
-  analyzeBill: () => void
+  analyzeBill: (override?: Partial<InputState>) => void
   updateManualHour: (entryId: string, value: number) => void
   dropToNextSlab: () => void
   generateSuggestions: () => Promise<void>
@@ -50,6 +51,8 @@ type EnergyContextValue = {
   suggestionsLoading: boolean
   solarInputs: SolarInputs
   setSolarInputs: (next: SolarInputs) => void
+  energyAgeInputs: EnergyAgeInput[]
+  setEnergyAgeInputs: (next: EnergyAgeInput[]) => void
 }
 
 const initialApplianceEntries = getDefaultApplianceEntries()
@@ -120,6 +123,9 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
   const [suggestions, setSuggestions] = useState<SuggestionCard[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [solarInputs, setSolarInputs] = useState<SolarInputs>(DEMO_SOLAR_INPUTS)
+  const [energyAgeInputs, setEnergyAgeInputs] = useState<EnergyAgeInput[]>([
+    createDefaultEnergyAgeInput(new Date().getFullYear()),
+  ])
 
   const tariffProfile = useMemo(() => getTariffProfile(analyzedInput.state), [analyzedInput.state])
   const calibrationFactor = useMemo(
@@ -186,18 +192,28 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
     }))
   }
 
-  function analyzeBill() {
+  function analyzeBill(override?: Partial<InputState>) {
+    const source: InputState = {
+      ...input,
+      ...override,
+      applianceEntries: override?.applianceEntries ?? input.applianceEntries,
+    }
+
     const normalizedEntries = (
-      input.applianceEntries.length ? cloneEntries(input.applianceEntries) : cloneEntries(initialApplianceEntries)
+      source.applianceEntries.length ? cloneEntries(source.applianceEntries) : cloneEntries(initialApplianceEntries)
     ).map(sanitizeEntry)
     const normalized: InputState = {
-      ...input,
-      monthlyBill: Number.isFinite(Number(input.monthlyBill)) && Number(input.monthlyBill) > 0 ? Number(input.monthlyBill) : DEFAULT_MONTHLY_BILL,
-      state: input.state || DEFAULT_STATE,
-      city: input.city || DEFAULT_CITY,
+      ...source,
+      monthlyBill:
+        Number.isFinite(Number(source.monthlyBill)) && Number(source.monthlyBill) > 0
+          ? Number(source.monthlyBill)
+          : DEFAULT_MONTHLY_BILL,
+      state: source.state || DEFAULT_STATE,
+      city: source.city || DEFAULT_CITY,
       applianceEntries: normalizedEntries,
     }
 
+    setInput(normalized)
     setAnalyzedInput(normalized)
     setManualEntries(cloneEntries(normalized.applianceEntries))
     setSuggestions([])
@@ -302,6 +318,8 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
         suggestionsLoading,
         solarInputs,
         setSolarInputs,
+        energyAgeInputs,
+        setEnergyAgeInputs,
       }}
     >
       {children}

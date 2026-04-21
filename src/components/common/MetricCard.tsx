@@ -28,9 +28,9 @@ export function MetricCard({
           }
 
   return (
-    <div className="rounded-xl border p-4" style={toneStyle}>
-      <p className="text-[11px] uppercase tracking-[0.24em] text-[var(--text-muted)]">{label}</p>
-      <p className="num-mono mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
+    <div className="rounded-xl border p-4 sm:p-5" style={toneStyle}>
+      <p className="text-sm font-medium text-[var(--text-muted)]">{label}</p>
+      <p className="num-mono mt-2 font-display text-3xl font-semibold tracking-tight text-[var(--text-primary)]">
         {value}
       </p>
       {hint ? <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{hint}</p> : null}

@@ -7,10 +7,10 @@ import { formatCurrency } from '../utils/format'
 import { getEffectiveTariffSlabs } from '../utils/tariff'
 
 const STARTER_CHIPS = [
-  'What if I replace my 2014 AC?',
-  'What if I run AC 2 hours less per day?',
-  'What if electricity prices rise 15% next year?',
-  'What if I install 3kW solar panels?',
+  'If I replace my old AC, how much can I save?',
+  'If I use AC 2 hours less daily, what happens?',
+  'What if electricity prices go up next year?',
+  'What if I install 3kW solar?',
 ]
 
 function renderHighlightedRupees(content: string) {
@@ -202,19 +202,19 @@ export function WhatIfChatbotPage() {
   return (
     <div className="space-y-6">
       <section className="glass-panel p-6 sm:p-8">
-        <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">What-If Chatbot</p>
+        <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">Ask Assistant</p>
         <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-5xl">
-          Ask scenario questions and get bill outcomes from your own data.
+          Ask simple questions and get savings estimates.
         </h2>
         <div className="pill-accent mt-5 inline-flex px-4 py-2 text-sm">
-          Advising based on your {formatCurrency(currentBill)} bill · {input.state} · {currentEntries.length} appliances
+          Based on your {formatCurrency(currentBill)} bill · {input.state} · {currentEntries.length} appliances
         </div>
       </section>
 
       <SectionCard
         eyebrow="Chat"
-        title="Personalized What-If Assistant"
-        description="The assistant receives your live bill, slab, appliance, and solar context on every message."
+        title="Personalized Savings Assistant"
+        description="Ask in plain language. You will get before vs after bill estimates in rupees."
       >
         <div className="space-y-4">
           {messages.length === 0 ? (
@@ -235,7 +235,7 @@ export function WhatIfChatbotPage() {
           <div className="panel-elevated max-h-[520px] space-y-3 overflow-y-auto rounded-xl p-4">
             {messages.length === 0 ? (
               <p className="text-sm text-[var(--text-muted)]">
-                Ask a what-if question to model before-vs-after bill impact in rupees.
+                Ask a question like "How much can I save if I reduce AC usage?"
               </p>
             ) : (
               messages.map((message, index) => (
@@ -273,7 +273,7 @@ export function WhatIfChatbotPage() {
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               disabled={loading}
-              placeholder="Ask: what if I install 3kW solar panels?"
+              placeholder="Ask: how much can I save if I reduce AC by 2 hours?"
               className="input-base w-full disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button

@@ -20,15 +20,15 @@ export function SimulationPanel() {
   return (
     <SectionCard
       eyebrow="Section 4"
-      title="Live Simulation Panel"
-      description="Adjust daily hours directly. The optimized bill recalculates instantly and the one-click slab drop pushes the current setup to the next cheaper band where possible."
+      title="Try Changes and See Savings"
+      description="Move the sliders to reduce daily usage and instantly see your updated bill."
       action={
         <button
           type="button"
           onClick={dropToNextSlab}
           className="btn-secondary rounded-full px-4 py-2 text-sm"
         >
-          Drop My Bill to Next Slab
+          Auto-Reduce to Next Band
         </button>
       }
     >

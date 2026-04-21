@@ -18,6 +18,7 @@ const TN_ABOVE_500_SLABS: TariffSlab[] = [
   { index: 6, bandLabel: '1001+', rate: 11, minUnits: 1000, maxUnits: null },
 ]
 
+
 export function getTariffProfile(state: string) {
   return TARIFF_PROFILES.find((profile) => profile.state === state) ?? TARIFF_PROFILES[0]
 }

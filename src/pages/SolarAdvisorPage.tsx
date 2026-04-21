@@ -8,17 +8,18 @@ import { SectionCard } from '../components/common/SectionCard'
 export function SolarAdvisorPage() {
   const { solarInputs, setSolarInputs } = useEnergy()
   const outcome = calculateSolarOutcome(solarInputs)
+  const verdictLabel = outcome.verdict === 'GO SOLAR' ? 'GO SOLAR' : 'NOT YET'
 
   return (
     <div className="space-y-6">
       <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="glass-panel p-6 sm:p-8">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">Solar Advisor</p>
+          <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">Solar Check</p>
           <h2 className="mt-4 font-display text-4xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-5xl">
-            Check solar viability before spending on installers.
+            Check if solar is worth it for your home.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--text-secondary)]">
-            This screen estimates system size, subsidy-adjusted investment, monthly offset, and a clear verdict using city and roof assumptions.
+            Enter your roof and bill details. We estimate system size, savings, payback, and a clear go/no-go result.
           </p>
         </div>
 
@@ -32,7 +33,7 @@ export function SolarAdvisorPage() {
           <MetricCard
             label="Payback"
             value={`${outcome.paybackYears.toFixed(1)} years`}
-            hint={outcome.scheme}
+              hint={outcome.scheme}
             tone={outcome.verdict === 'GO SOLAR' ? 'positive' : 'warning'}
           />
         </div>
@@ -40,8 +41,8 @@ export function SolarAdvisorPage() {
 
       <SectionCard
         eyebrow="Inputs"
-        title="Solar Feasibility Inputs"
-        description="The defaults are stage-ready, but the inputs are realistic enough to discuss an actual home installation."
+        title="Your Home Details"
+        description="Fill these basic details to get a realistic solar estimate."
       >
         <div className="grid gap-4 lg:grid-cols-5">
           <label className="panel-surface p-4">
@@ -145,8 +146,8 @@ export function SolarAdvisorPage() {
 
       <SectionCard
         eyebrow="Output"
-        title="Solar Recommendation"
-        description="The recommendation is intentionally blunt: how large the system should be, what it may cost after subsidy, how much it saves, and whether the numbers justify moving ahead."
+        title="Solar Result"
+        description="See expected cost, savings, and whether solar is a good choice for you."
       >
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
           <MetricCard label="System size" value={`${outcome.systemSizeKw.toFixed(1)} kW`} />
@@ -177,7 +178,7 @@ export function SolarAdvisorPage() {
           >
             <p className="label-muted">Final verdict</p>
             <p className="mt-4 font-display text-4xl font-semibold text-[var(--text-primary)]">
-              {outcome.verdict === 'GO SOLAR' ? 'GO SOLAR' : 'NOT WORTH IT'}
+              {verdictLabel}
             </p>
             <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{outcome.verdictReason}</p>
           </div>
@@ -186,8 +187,8 @@ export function SolarAdvisorPage() {
 
       <SectionCard
         eyebrow="Scheme Matcher"
-        title="Government Scheme Matcher"
-        description="Shows applicable central and state rooftop solar support and policy context for your selected location."
+        title="Available Subsidies"
+        description="Shows subsidy support and policy notes for your selected state."
       >
         <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
           <div className="rounded-xl border border-[var(--success)]/30 bg-[color-mix(in_srgb,var(--success)_10%,var(--bg-surface))] p-5">
@@ -228,8 +229,8 @@ export function SolarAdvisorPage() {
 
       <SectionCard
         eyebrow="Carbon Offset"
-        title="Solar Carbon Offset Calculator"
-        description="Links your rooftop system output to annual carbon reduction using the same unit-based energy model."
+        title="Environmental Impact"
+        description="Shows how much carbon your solar system can avoid each year."
       >
         <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
           <div className="rounded-xl border border-[var(--success)]/30 bg-[color-mix(in_srgb,var(--success)_10%,var(--bg-surface))] p-5">

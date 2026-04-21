@@ -18,19 +18,19 @@ export function SectionCard({
   className = '',
 }: SectionCardProps) {
   return (
-    <section className={`glass-panel p-5 sm:p-6 ${className}`}>
-      <div className="mb-5 flex flex-col gap-4 border-b border-[var(--border-strong)] pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className={`glass-panel p-4 sm:p-6 ${className}`}>
+      <div className="mb-4 flex flex-col gap-3 border-b border-[var(--border-strong)] pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           {eyebrow ? (
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--accent)]">
+            <p className="text-xs font-semibold text-[var(--accent)]">
               {eyebrow}
             </p>
           ) : null}
-          <h2 className="mt-2 font-display text-[28px] font-semibold tracking-tight text-[var(--text-primary)]">
+          <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">
             {title}
           </h2>
           {description ? (
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">{description}</p>
+            <p className="mt-2 max-w-3xl text-base leading-7 text-[var(--text-secondary)]">{description}</p>
           ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}

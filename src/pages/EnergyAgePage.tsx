@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { MetricCard } from '../components/common/MetricCard'
 import { SectionCard } from '../components/common/SectionCard'
 import { useEnergy } from '../context/EnergyContext'
@@ -49,9 +49,9 @@ function ScoreRing({ score, grade }: { score: number; grade: 'A' | 'B' | 'C' | '
 }
 
 export function EnergyAgePage() {
-  const { currentScenario, tariffProfile } = useEnergy()
+  const { currentScenario, tariffProfile, energyAgeInputs, setEnergyAgeInputs } = useEnergy()
   const currentYear = new Date().getFullYear()
-  const [appliances, setAppliances] = useState<EnergyAgeInput[]>([createDefaultEnergyAgeInput(currentYear)])
+  const appliances = energyAgeInputs
 
   const tariffRate = currentScenario.slabStatus.slab.rate
 
@@ -72,38 +72,35 @@ export function EnergyAgePage() {
     .reduce((sum, item) => sum + item.monthlySaving, 0)
 
   function updateAppliance(index: number, patch: Partial<EnergyAgeInput>) {
-    setAppliances((current) => current.map((item, idx) => (idx === index ? { ...item, ...patch } : item)))
+    setEnergyAgeInputs(appliances.map((item, idx) => (idx === index ? { ...item, ...patch } : item)))
   }
 
   function addAppliance() {
     if (appliances.length >= 8) return
-    setAppliances((current) => [
-      ...current,
+    setEnergyAgeInputs([
+      ...appliances,
       {
         ...createDefaultEnergyAgeInput(currentYear),
-        name: `Appliance ${current.length + 1}`,
+        name: `Appliance ${appliances.length + 1}`,
       },
     ])
   }
 
   function removeAppliance(index: number) {
-    setAppliances((current) => {
-      if (current.length <= 1) return current
-      return current.filter((_, idx) => idx !== index)
-    })
+    if (appliances.length <= 1) return
+    setEnergyAgeInputs(appliances.filter((_, idx) => idx !== index))
   }
 
   return (
     <div className="space-y-6">
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="glass-panel p-6 sm:p-8">
-          <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">Energy Age Score</p>
+          <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--accent)]">Appliance Health</p>
           <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-5xl">
-            Find appliances that look fine but quietly overcharge you every month.
+            Find old appliances that are increasing your bill.
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--text-secondary)]">
-            Each appliance is scored by star efficiency and age decay against a modern 5-star equivalent, then ranked
-            worst first for quick replacement decisions.
+            Add your appliances and we will rank them from worst to best based on age and efficiency.
           </p>
         </div>
 
@@ -115,9 +112,9 @@ export function EnergyAgePage() {
             tone="warning"
           />
           <MetricCard
-            label="Urgent replacement upside"
+            label="Possible monthly savings"
             value={formatCurrency(urgentReplacementSavings)}
-            hint="Monthly saving if all D/F appliances are replaced"
+            hint="If low-grade appliances are replaced"
             tone="positive"
           />
         </div>
@@ -125,8 +122,8 @@ export function EnergyAgePage() {
 
       <SectionCard
         eyebrow="Input"
-        title="Appliance Details"
-        description="Add up to 8 appliances. Only five fields are needed: name, type, purchase year, star rating, and daily hours."
+        title="Your Appliances"
+        description="Add up to 8 appliances. Enter name, type, purchase year, star rating, and daily usage."
         action={
           <button
             type="button"
@@ -238,8 +235,8 @@ export function EnergyAgePage() {
 
       <SectionCard
         eyebrow="Scored"
-        title="Appliance Priority Grid"
-        description="Cards are sorted by Energy Age Score (worst first), so high-impact replacement opportunities rise to the top."
+        title="Replacement Priority"
+        description="Cards are sorted from worst to best so you can replace high-impact appliances first."
       >
         <div className="grid gap-4 lg:grid-cols-2">
           {sortedResults.map((result) => {

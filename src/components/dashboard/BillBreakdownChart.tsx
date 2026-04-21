@@ -11,8 +11,8 @@ export function BillBreakdownChart() {
   return (
     <SectionCard
       eyebrow="Section 2"
-      title="Bill Decoder"
-      description="Appliance cost is estimated from wattage, daily runtime, and the calibrated total bill so you can see where the money is actually going."
+      title="Where Your Bill Comes From"
+      description="This compares your current setup with the adjusted setup so you can quickly spot high-cost appliances."
     >
       <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
         <div className="panel-elevated rounded-xl p-4">
@@ -21,13 +21,13 @@ export function BillBreakdownChart() {
               labels,
               datasets: [
                 {
-                  label: 'Current bill',
+                  label: 'Before changes',
                   data: baseScenario.applianceBreakdown.map((item) => item.cost),
                   backgroundColor: '#60738c',
                   borderRadius: 10,
                 },
                 {
-                  label: 'Optimized bill',
+                  label: 'After changes',
                   data: currentScenario.applianceBreakdown.map((item) => item.cost),
                   backgroundColor: '#00ff88',
                   borderRadius: 10,

@@ -8,14 +8,14 @@ export function SuggestionsPanel() {
   return (
     <SectionCard
       eyebrow="Section 5"
-      title="AI Optimization Advisor"
-      description="These recommendations are quantified and toggle directly into the simulation, so the user can see the bill change instead of reading static advice."
+      title="Easy Saving Suggestions"
+      description="Get simple actions with expected savings. Click Apply to test each one instantly."
       action={
         <button
           onClick={() => void generateSuggestions()}
           className="btn-primary rounded-full px-4 py-2 text-sm"
         >
-          {suggestionsLoading ? 'Generating...' : 'Get Smart Suggestions'}
+          {suggestionsLoading ? 'Loading...' : 'Show Suggestions'}
         </button>
       }
     >
@@ -31,7 +31,7 @@ export function SuggestionsPanel() {
                   {suggestion ? suggestion.effort : 'Ready'}
                 </p>
                 <h3 className="mt-2 font-display text-2xl font-semibold text-[var(--text-primary)]">
-                  {suggestion?.title ?? 'Generate ranked actions'}
+                  {suggestion?.title ?? 'Create top saving actions'}
                 </h3>
               </div>
               {suggestion ? (

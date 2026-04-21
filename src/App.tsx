@@ -1,8 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/layout/AppShell'
+import { AdvisorPage } from './pages/AdvisorPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { EnergyAgePage } from './pages/EnergyAgePage'
-import { RenewableOptimiserPage } from './pages/RenewableOptimiserPage'
 import { SolarAdvisorPage } from './pages/SolarAdvisorPage'
 import { WhatIfChatbotPage } from './pages/WhatIfChatbotPage'
 
@@ -11,7 +11,7 @@ function App() {
     <AppShell>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/renewable" element={<RenewableOptimiserPage />} />
+        <Route path="/advisor" element={<AdvisorPage />} />
         <Route path="/solar" element={<SolarAdvisorPage />} />
         <Route path="/energy-age" element={<EnergyAgePage />} />
         <Route path="/what-if" element={<WhatIfChatbotPage />} />
