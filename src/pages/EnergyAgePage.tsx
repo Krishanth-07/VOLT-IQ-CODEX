@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { MetricCard } from '../components/common/MetricCard'
 import { SectionCard } from '../components/common/SectionCard'
 import { useEnergy } from '../context/EnergyContext'
@@ -32,14 +32,32 @@ const TYPE_BADGE: Record<EnergyAgeInput['type'], string> = {
 
 const PICKER_DEFAULTS: Record<
   EnergyAgeInput['type'],
-  { name: string; starRating: number; dailyHours: number; purchaseYearOffset: number }
+  { name: string; wattage: number; starRating: number; dailyHours: number; purchaseYearOffset: number }
 > = {
-  ac_1_5t: { name: 'Living Room AC', starRating: 3, dailyHours: 8, purchaseYearOffset: 6 },
-  refrigerator: { name: 'Main Refrigerator', starRating: 4, dailyHours: 10, purchaseYearOffset: 5 },
-  washing_machine: { name: 'Washing Machine', starRating: 3, dailyHours: 0.5, purchaseYearOffset: 4 },
-  water_heater: { name: 'Bathroom Geyser', starRating: 3, dailyHours: 1, purchaseYearOffset: 5 },
-  ceiling_fan: { name: 'Ceiling Fan Cluster', starRating: 4, dailyHours: 10, purchaseYearOffset: 7 },
-  television: { name: 'Television', starRating: 4, dailyHours: 4, purchaseYearOffset: 4 },
+  ac_1_5t: { name: 'Living Room AC', wattage: 1500, starRating: 3, dailyHours: 8, purchaseYearOffset: 6 },
+  refrigerator: { name: 'Main Refrigerator', wattage: 110, starRating: 4, dailyHours: 10, purchaseYearOffset: 5 },
+  washing_machine: { name: 'Washing Machine', wattage: 600, starRating: 3, dailyHours: 0.5, purchaseYearOffset: 4 },
+  water_heater: { name: 'Bathroom Geyser', wattage: 2000, starRating: 3, dailyHours: 1, purchaseYearOffset: 5 },
+  ceiling_fan: { name: 'Ceiling Fan Cluster', wattage: 60, starRating: 4, dailyHours: 10, purchaseYearOffset: 7 },
+  television: { name: 'Television', wattage: 95, starRating: 4, dailyHours: 4, purchaseYearOffset: 4 },
+}
+
+type ApplianceFormState = {
+  wattage: string
+  dailyHours: string
+  purchaseYear: string
+  starRating: string
+}
+
+function createPickerForm(type: EnergyAgeInput['type'], currentYear: number): ApplianceFormState {
+  const template = PICKER_DEFAULTS[type]
+
+  return {
+    wattage: String(template.wattage),
+    dailyHours: String(template.dailyHours),
+    purchaseYear: String(Math.max(currentYear - template.purchaseYearOffset, 1990)),
+    starRating: String(template.starRating),
+  }
 }
 
 function ScoreRing({ score, grade }: { score: number; grade: 'A' | 'B' | 'C' | 'D' | 'F' }) {
@@ -64,7 +82,9 @@ export function EnergyAgePage() {
   const [pickerType, setPickerType] = useState<EnergyAgeInput['type']>('ac_1_5t')
   const currentYear = new Date().getFullYear()
   const appliances = energyAgeInputs
-  const selectedAlreadyAdded = appliances.some((item) => item.type === pickerType)
+  const [pickerForm, setPickerForm] = useState<ApplianceFormState>(() =>
+    createPickerForm('ac_1_5t', currentYear),
+  )
 
   const tariffRate = currentScenario.slabStatus.slab.rate
 
@@ -84,24 +104,37 @@ export function EnergyAgePage() {
     .filter((item) => item.grade === 'D' || item.grade === 'F')
     .reduce((sum, item) => sum + item.monthlySaving, 0)
 
-  function addAppliance() {
-    const template = PICKER_DEFAULTS[pickerType]
+  function updatePickerForm(field: keyof ApplianceFormState, value: string) {
+    setPickerForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function handlePickerTypeChange(nextType: EnergyAgeInput['type']) {
+    setPickerType(nextType)
+    setPickerForm(createPickerForm(nextType, currentYear))
+  }
+
+  function addAppliance(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const wattage = Number(pickerForm.wattage)
+    const dailyHours = Number(pickerForm.dailyHours)
+    const purchaseYear = Number(pickerForm.purchaseYear)
+    const starRating = Number(pickerForm.starRating)
+
+    if (!Number.isFinite(wattage) || wattage <= 0 || !Number.isFinite(dailyHours) || dailyHours < 0) {
+      return
+    }
 
     setEnergyAgeInputs((current) => {
       const nextEntry = {
-        name: template.name,
+        id: `${pickerType}-${Date.now()}-${current.length + 1}`,
+        name: PICKER_DEFAULTS[pickerType].name,
         type: pickerType,
-        purchaseYear: Math.max(currentYear - template.purchaseYearOffset, 1990),
-        starRating: template.starRating,
-        dailyHours: template.dailyHours,
+        wattage,
+        purchaseYear,
+        starRating,
+        dailyHours,
       }
-
-      const existingIndex = current.findIndex((item) => item.type === pickerType)
-      if (existingIndex >= 0) {
-        return current.map((item, index) => (index === existingIndex ? { ...item, ...nextEntry } : item))
-      }
-
-      if (current.length >= 8) return current
 
       return [...current, nextEntry]
     })
@@ -139,33 +172,126 @@ export function EnergyAgePage() {
       <SectionCard
         eyebrow="Input"
         title="Your Appliances"
-        description="Pick one appliance at a time from the dropdown below."
-        action={
-          <div className="flex items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface)] p-3">
-            <select
-              value={pickerType}
-              onChange={(event) => setPickerType(event.target.value as EnergyAgeInput['type'])}
-              className="input-base min-w-[220px]"
-              aria-label="Choose an appliance to add"
-            >
-              {ENERGY_AGE_TYPE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+        description="Pick an appliance, then enter its required usage details so the recommendation is based on your real home data."
+      >
+        <form onSubmit={addAppliance} className="grid gap-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label className="grid gap-2">
+              <span className="label-muted">Appliance name</span>
+              <select
+                value={pickerType}
+                onChange={(event) => handlePickerTypeChange(event.target.value as EnergyAgeInput['type'])}
+                className="input-base"
+                aria-label="Choose an appliance to add"
+              >
+                {ENERGY_AGE_TYPE_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {PICKER_DEFAULTS[option.id].name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="grid gap-2">
+              <span className="label-muted">Wattage required</span>
+              <input
+                required
+                min="1"
+                step="1"
+                type="number"
+                value={pickerForm.wattage}
+                onChange={(event) => updatePickerForm('wattage', event.target.value)}
+                className="input-base"
+                placeholder="e.g. 1500"
+              />
+            </label>
+
+            <div className="grid gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 md:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="label-muted">Hours used/day required</span>
+                <span className="num-mono rounded-full border border-[var(--accent)]/30 bg-[color-mix(in_srgb,var(--accent)_12%,var(--bg-surface))] px-3 py-1 text-sm font-semibold text-[var(--accent)]">
+                  {Number(pickerForm.dailyHours).toFixed(1)} hrs/day
+                </span>
+              </div>
+              <input
+                required
+                min="0"
+                max="24"
+                step="0.1"
+                type="range"
+                value={pickerForm.dailyHours}
+                onChange={(event) => updatePickerForm('dailyHours', event.target.value)}
+                className="slider w-full"
+                aria-label="Hours used per day"
+              />
+              <div className="flex justify-between text-xs text-[var(--text-muted)]">
+                <span>0h</span>
+                <span>12h</span>
+                <span>24h</span>
+              </div>
+            </div>
+
+            <label className="grid gap-2">
+              <span className="label-muted">Purchase year</span>
+              <input
+                required
+                min="1990"
+                max={currentYear}
+                step="1"
+                type="number"
+                value={pickerForm.purchaseYear}
+                onChange={(event) => updatePickerForm('purchaseYear', event.target.value)}
+                className="input-base"
+              />
+            </label>
+
+            <div className="grid gap-2">
+              <span className="label-muted">Star rating</span>
+              <div className="rounded-xl border border-amber-300/25 bg-[color-mix(in_srgb,#f59e0b_10%,var(--bg-surface))] p-1.5">
+                <div className="grid grid-cols-5 gap-1" role="radiogroup" aria-label="Star rating">
+                  {[1, 2, 3, 4, 5].map((rating) => {
+                    const selectedRating = Number(pickerForm.starRating)
+                    const isSelected = selectedRating === rating
+                    const isFilled = selectedRating >= rating
+
+                    return (
+                      <button
+                        key={rating}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => updatePickerForm('starRating', String(rating))}
+                        className={`rounded-lg px-1.5 py-2 text-center text-lg transition hover:-translate-y-0.5 ${
+                          isSelected
+                            ? 'border border-amber-300 bg-amber-300 text-[#2a1700] shadow-[0_10px_24px_rgba(245,158,11,0.22)]'
+                            : 'border border-transparent bg-[var(--bg-elevated)] text-amber-300/75 hover:border-amber-300/40'
+                        }`}
+                        title={`${rating} star rating`}
+                      >
+                        {isFilled ? <>&#9733;</> : <>&#9734;</>}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="mt-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200">
+                  {pickerForm.starRating} star efficiency
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Wattage and daily hours are required because they directly decide monthly units and cost.
+            </p>
             <button
-              type="button"
-              onClick={addAppliance}
-              disabled={appliances.length >= 8}
+              type="submit"
               className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {selectedAlreadyAdded ? 'Update recommendation' : `Add to recommendations (${appliances.length}/8)`}
+              Add to recommendations ({appliances.length})
             </button>
           </div>
-        }
-      >
-        <div />
+        </form>
       </SectionCard>
 
       <SectionCard
@@ -173,12 +299,20 @@ export function EnergyAgePage() {
         title="Replacement Priority"
         description="Cards are sorted from worst to best so you can replace high-impact appliances first."
       >
-        <div className="grid gap-4 lg:grid-cols-2">
-          {sortedResults.map((result) => {
+        {sortedResults.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-[var(--border-strong)] bg-[var(--bg-surface)] p-6 text-center">
+            <p className="font-display text-xl font-semibold text-[var(--text-primary)]">No appliances added yet</p>
+            <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+              Pick an appliance above, enter wattage and daily usage hours, then add it to see its replacement priority.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            {sortedResults.map((result) => {
             const theme = GRADE_THEME[result.grade]
 
             return (
-              <article key={`${result.input.name}-${result.input.purchaseYear}-${result.input.type}`} className={`rounded-xl border bg-[var(--bg-surface)] p-5 ${theme.border}`}>
+              <article key={result.input.id} className={`rounded-xl border bg-[var(--bg-surface)] p-5 ${theme.border}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -191,6 +325,9 @@ export function EnergyAgePage() {
                     </div>
                     <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
                       {ENERGY_AGE_SPECS[result.input.type].label} · {result.age} years old · {result.input.starRating}★
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                      {result.input.wattage}W rated input - {result.input.dailyHours} hrs/day
                     </p>
                   </div>
                   <ScoreRing score={result.energyAgeScore} grade={result.grade} />
@@ -229,8 +366,9 @@ export function EnergyAgePage() {
                 </div>
               </article>
             )
-          })}
-        </div>
+            })}
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard

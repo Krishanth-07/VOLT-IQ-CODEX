@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, useState, type Dispatch, type React
 import { DEFAULT_CITY, DEFAULT_MONTHLY_BILL, DEFAULT_STATE, DEMO_SOLAR_INPUTS, getDefaultApplianceEntries, getCatalogItem, createApplianceEntry } from '../data/demo'
 import { getAiSuggestions } from '../services/openai'
 import type { ApplianceCatalogId, ApplianceEntry, SolarInputs, SuggestionCard } from '../types'
-import { createDefaultEnergyAgeInput, type EnergyAgeInput } from '../utils/energyAge'
+import type { EnergyAgeInput } from '../utils/energyAge'
 import {
   createCalibrationFactor,
   createScenarioFromEntries,
@@ -123,9 +123,7 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
   const [suggestions, setSuggestions] = useState<SuggestionCard[]>([])
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [solarInputs, setSolarInputs] = useState<SolarInputs>(DEMO_SOLAR_INPUTS)
-  const [energyAgeInputs, setEnergyAgeInputs] = useState<EnergyAgeInput[]>([
-    createDefaultEnergyAgeInput(new Date().getFullYear()),
-  ])
+  const [energyAgeInputs, setEnergyAgeInputs] = useState<EnergyAgeInput[]>([])
 
   const tariffProfile = useMemo(() => getTariffProfile(analyzedInput.state), [analyzedInput.state])
   const calibrationFactor = useMemo(

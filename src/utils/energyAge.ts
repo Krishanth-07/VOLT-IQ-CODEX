@@ -9,8 +9,10 @@ export type EnergyAgeApplianceType =
   | 'television'
 
 export type EnergyAgeInput = {
+  id: string
   name: string
   type: EnergyAgeApplianceType
+  wattage: number
   purchaseYear: number
   starRating: number
   dailyHours: number
@@ -89,6 +91,18 @@ export const ENERGY_AGE_TYPE_OPTIONS = Object.entries(ENERGY_AGE_SPECS).map(([ke
   label: value.label,
 }))
 
+const DEFAULT_ENERGY_AGE_INPUTS: Record<
+  EnergyAgeApplianceType,
+  { name: string; wattage: number; starRating: number; dailyHours: number; purchaseYearOffset: number }
+> = {
+  ac_1_5t: { name: 'Living Room AC', wattage: 1500, starRating: 3, dailyHours: 8, purchaseYearOffset: 6 },
+  refrigerator: { name: 'Main Refrigerator', wattage: 110, starRating: 4, dailyHours: 10, purchaseYearOffset: 5 },
+  washing_machine: { name: 'Washing Machine', wattage: 600, starRating: 3, dailyHours: 0.5, purchaseYearOffset: 4 },
+  water_heater: { name: 'Bathroom Geyser', wattage: 2000, starRating: 3, dailyHours: 1, purchaseYearOffset: 5 },
+  ceiling_fan: { name: 'Ceiling Fan Cluster', wattage: 60, starRating: 4, dailyHours: 10, purchaseYearOffset: 7 },
+  television: { name: 'Television', wattage: 95, starRating: 4, dailyHours: 4, purchaseYearOffset: 4 },
+}
+
 export function getEnergyGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
   if (score >= 80) return 'A'
   if (score >= 60) return 'B'
@@ -98,13 +112,23 @@ export function getEnergyGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
 }
 
 export function createDefaultEnergyAgeInput(currentYear: number): EnergyAgeInput {
-  return {
-    name: 'Living Room AC',
-    type: 'ac_1_5t',
-    purchaseYear: Math.max(currentYear - 6, 2005),
-    starRating: 3,
-    dailyHours: 8,
-  }
+  return createDefaultEnergyAgeInputs(currentYear)[0]
+}
+
+export function createDefaultEnergyAgeInputs(currentYear: number): EnergyAgeInput[] {
+  return ENERGY_AGE_TYPE_OPTIONS.map((option) => {
+    const template = DEFAULT_ENERGY_AGE_INPUTS[option.id]
+
+    return {
+      id: `${option.id}-default`,
+      name: template.name,
+      type: option.id,
+      wattage: template.wattage,
+      purchaseYear: Math.max(currentYear - template.purchaseYearOffset, 1990),
+      starRating: template.starRating,
+      dailyHours: template.dailyHours,
+    }
+  })
 }
 
 export function calculateEnergyAgeResult(
@@ -114,10 +138,14 @@ export function calculateEnergyAgeResult(
 ): EnergyAgeResult {
   const spec = ENERGY_AGE_SPECS[appliance.type]
   const normalizedStar = Math.round(clamp(appliance.starRating, 1, 5))
+  const normalizedWattage = Number(appliance.wattage)
   const safeHours = clamp(appliance.dailyHours, 0, 24)
   const safePurchaseYear = Math.round(clamp(appliance.purchaseYear, 1990, currentYear))
 
-  const baseWattage = spec.wattageByStar[normalizedStar]
+  const baseWattage =
+    Number.isFinite(normalizedWattage) && normalizedWattage > 0
+      ? normalizedWattage
+      : spec.wattageByStar[normalizedStar]
   const modernWattage = spec.wattageByStar[5]
   const age = Math.max(currentYear - safePurchaseYear, 0)
   const degradation = age > 5 ? Math.min((age - 5) * 0.04, 0.4) : 0
@@ -151,6 +179,7 @@ export function calculateEnergyAgeResult(
   return {
     input: {
       ...appliance,
+      wattage: Number(baseWattage.toFixed(0)),
       purchaseYear: safePurchaseYear,
       starRating: normalizedStar,
       dailyHours: safeHours,
