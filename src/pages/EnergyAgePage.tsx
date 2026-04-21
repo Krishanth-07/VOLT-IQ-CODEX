@@ -1,11 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { MetricCard } from '../components/common/MetricCard'
 import { SectionCard } from '../components/common/SectionCard'
 import { useEnergy } from '../context/EnergyContext'
 import { formatCompactCurrency, formatCurrency } from '../utils/format'
 import {
   calculateEnergyAgeResult,
-  createDefaultEnergyAgeInput,
   ENERGY_AGE_SPECS,
   ENERGY_AGE_TYPE_OPTIONS,
   type EnergyAgeInput,
@@ -31,6 +30,18 @@ const TYPE_BADGE: Record<EnergyAgeInput['type'], string> = {
   television: 'TV',
 }
 
+const PICKER_DEFAULTS: Record<
+  EnergyAgeInput['type'],
+  { name: string; starRating: number; dailyHours: number; purchaseYearOffset: number }
+> = {
+  ac_1_5t: { name: 'Living Room AC', starRating: 3, dailyHours: 8, purchaseYearOffset: 6 },
+  refrigerator: { name: 'Main Refrigerator', starRating: 4, dailyHours: 10, purchaseYearOffset: 5 },
+  washing_machine: { name: 'Washing Machine', starRating: 3, dailyHours: 0.5, purchaseYearOffset: 4 },
+  water_heater: { name: 'Bathroom Geyser', starRating: 3, dailyHours: 1, purchaseYearOffset: 5 },
+  ceiling_fan: { name: 'Ceiling Fan Cluster', starRating: 4, dailyHours: 10, purchaseYearOffset: 7 },
+  television: { name: 'Television', starRating: 4, dailyHours: 4, purchaseYearOffset: 4 },
+}
+
 function ScoreRing({ score, grade }: { score: number; grade: 'A' | 'B' | 'C' | 'D' | 'F' }) {
   const theme = GRADE_THEME[grade]
 
@@ -50,8 +61,10 @@ function ScoreRing({ score, grade }: { score: number; grade: 'A' | 'B' | 'C' | '
 
 export function EnergyAgePage() {
   const { currentScenario, tariffProfile, energyAgeInputs, setEnergyAgeInputs } = useEnergy()
+  const [pickerType, setPickerType] = useState<EnergyAgeInput['type']>('ac_1_5t')
   const currentYear = new Date().getFullYear()
   const appliances = energyAgeInputs
+  const selectedAlreadyAdded = appliances.some((item) => item.type === pickerType)
 
   const tariffRate = currentScenario.slabStatus.slab.rate
 
@@ -71,24 +84,27 @@ export function EnergyAgePage() {
     .filter((item) => item.grade === 'D' || item.grade === 'F')
     .reduce((sum, item) => sum + item.monthlySaving, 0)
 
-  function updateAppliance(index: number, patch: Partial<EnergyAgeInput>) {
-    setEnergyAgeInputs(appliances.map((item, idx) => (idx === index ? { ...item, ...patch } : item)))
-  }
-
   function addAppliance() {
-    if (appliances.length >= 8) return
-    setEnergyAgeInputs([
-      ...appliances,
-      {
-        ...createDefaultEnergyAgeInput(currentYear),
-        name: `Appliance ${appliances.length + 1}`,
-      },
-    ])
-  }
+    const template = PICKER_DEFAULTS[pickerType]
 
-  function removeAppliance(index: number) {
-    if (appliances.length <= 1) return
-    setEnergyAgeInputs(appliances.filter((_, idx) => idx !== index))
+    setEnergyAgeInputs((current) => {
+      const nextEntry = {
+        name: template.name,
+        type: pickerType,
+        purchaseYear: Math.max(currentYear - template.purchaseYearOffset, 1990),
+        starRating: template.starRating,
+        dailyHours: template.dailyHours,
+      }
+
+      const existingIndex = current.findIndex((item) => item.type === pickerType)
+      if (existingIndex >= 0) {
+        return current.map((item, index) => (index === existingIndex ? { ...item, ...nextEntry } : item))
+      }
+
+      if (current.length >= 8) return current
+
+      return [...current, nextEntry]
+    })
   }
 
   return (
@@ -123,114 +139,33 @@ export function EnergyAgePage() {
       <SectionCard
         eyebrow="Input"
         title="Your Appliances"
-        description="Add up to 8 appliances. Enter name, type, purchase year, star rating, and daily usage."
+        description="Pick one appliance at a time from the dropdown below."
         action={
-          <button
-            type="button"
-            onClick={addAppliance}
-            disabled={appliances.length >= 8}
-            className="btn-primary rounded-full px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Add Appliance ({appliances.length}/8)
-          </button>
+          <div className="flex items-center gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface)] p-3">
+            <select
+              value={pickerType}
+              onChange={(event) => setPickerType(event.target.value as EnergyAgeInput['type'])}
+              className="input-base min-w-[220px]"
+              aria-label="Choose an appliance to add"
+            >
+              {ENERGY_AGE_TYPE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={addAppliance}
+              disabled={appliances.length >= 8}
+              className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {selectedAlreadyAdded ? 'Update recommendation' : `Add to recommendations (${appliances.length}/8)`}
+            </button>
+          </div>
         }
       >
-        <div className="space-y-3">
-          {appliances.map((appliance, index) => (
-            <div key={`${appliance.name}-${index}`} className="panel-elevated rounded-xl p-4">
-              <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr_1fr_1.2fr_auto]">
-                <label className="space-y-2">
-                  <span className="label-muted">Name</span>
-                  <input
-                    type="text"
-                    value={appliance.name}
-                    onChange={(event) => updateAppliance(index, { name: event.target.value })}
-                    className="input-base w-full"
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="label-muted">Type</span>
-                  <select
-                    value={appliance.type}
-                    onChange={(event) => {
-                      const nextType = event.target.value as EnergyAgeInput['type']
-                      updateAppliance(index, {
-                        type: nextType,
-                        name: appliance.name || ENERGY_AGE_SPECS[nextType].label,
-                      })
-                    }}
-                    className="input-base w-full"
-                  >
-                    {ENERGY_AGE_TYPE_OPTIONS.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="space-y-2">
-                  <span className="label-muted">Purchase year</span>
-                  <input
-                    type="number"
-                    min={1990}
-                    max={currentYear}
-                    value={appliance.purchaseYear}
-                    onChange={(event) => updateAppliance(index, { purchaseYear: Number(event.target.value) })}
-                    className="input-base num-mono w-full"
-                  />
-                </label>
-
-                <div className="space-y-2">
-                  <span className="label-muted">Star rating</span>
-                  <div className="panel-surface grid grid-cols-5 gap-1 rounded-xl p-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => updateAppliance(index, { starRating: star })}
-                        className={`rounded-lg px-2 py-2 text-xs transition ${
-                          appliance.starRating === star
-                            ? 'bg-[var(--accent)] text-white'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
-                        }`}
-                      >
-                        {star}★
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-end justify-end">
-                  <button
-                    type="button"
-                    onClick={() => removeAppliance(index)}
-                    className="btn-secondary rounded-xl px-3 py-2 text-xs"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-
-              <div className="panel-surface mt-3 rounded-xl p-3">
-                <div className="mb-2 flex items-center justify-between text-xs text-[var(--text-muted)]">
-                  <span>Daily runtime</span>
-                  <span className="num-mono">{appliance.dailyHours.toFixed(1)} h/day</span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={24}
-                  step={0.5}
-                  value={appliance.dailyHours}
-                  onChange={(event) => updateAppliance(index, { dailyHours: Number(event.target.value) })}
-                  className="slider w-full"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <div />
       </SectionCard>
 
       <SectionCard
