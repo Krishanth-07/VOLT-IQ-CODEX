@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react'
 import { DEFAULT_CITY, DEFAULT_MONTHLY_BILL, DEFAULT_STATE, DEMO_SOLAR_INPUTS, getDefaultApplianceEntries, getCatalogItem, createApplianceEntry } from '../data/demo'
 import { getAiSuggestions } from '../services/openai'
 import type { ApplianceCatalogId, ApplianceEntry, SolarInputs, SuggestionCard } from '../types'
@@ -23,7 +23,7 @@ type InputState = {
 
 type EnergyContextValue = {
   input: InputState
-  setInput: (next: InputState) => void
+  setInput: Dispatch<SetStateAction<InputState>>
   updateInputEntry: (entryId: string, patch: Partial<ApplianceEntry>) => void
   replaceInputEntryCatalog: (entryId: string, catalogId: ApplianceCatalogId) => void
   addAppliance: (catalogId: ApplianceCatalogId) => void
@@ -52,7 +52,7 @@ type EnergyContextValue = {
   solarInputs: SolarInputs
   setSolarInputs: (next: SolarInputs) => void
   energyAgeInputs: EnergyAgeInput[]
-  setEnergyAgeInputs: (next: EnergyAgeInput[]) => void
+  setEnergyAgeInputs: Dispatch<SetStateAction<EnergyAgeInput[]>>
 }
 
 const initialApplianceEntries = getDefaultApplianceEntries()
